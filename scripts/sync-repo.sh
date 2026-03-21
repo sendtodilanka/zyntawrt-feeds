@@ -35,9 +35,15 @@ echo "📦 Syncing: $SYNC_REPO_URL → $SYNC_DEST_DIR"
 # Extract owner/repo from URL (handles both .git and no-.git suffixes)
 REPO_PATH=$(echo "$SYNC_REPO_URL" | sed 's|https://github.com/||;s|\.git$||')
 
-# Download tarball via GitHub archive endpoint (no git, no rate-limit issues)
-TARBALL_URL="https://github.com/${REPO_PATH}/archive/HEAD.tar.gz"
-CURL_ARGS=(-sL --retry 3 --retry-delay 2 --fail)
+# Download via GitHub API tarball endpoint (authenticated, 5000 req/hr limit)
+# API endpoint guarantees a real tarball response (unlike raw archive URLs which
+# can silently return HTML on rate-limit/auth errors)
+TARBALL_URL="https://api.github.com/repos/${REPO_PATH}/tarball/HEAD"
+CURL_ARGS=(
+    -sL --retry 3 --retry-delay 2 --fail
+    -H "Accept: application/vnd.github+json"
+    -H "X-GitHub-Api-Version: 2022-11-28"
+)
 if [ -n "${GITHUB_TOKEN:-}" ]; then
     CURL_ARGS+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
 fi
