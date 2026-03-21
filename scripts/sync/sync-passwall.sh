@@ -5,3 +5,4 @@ export SYNC_REPO_URL="https://github.com/xiaorouji/openwrt-passwall.git"
 export SYNC_DEST_DIR="feeds/passwall"
 export SYNC_CLEAN_DEST="true"
 bash "$SCRIPT_DIR/../sync-repo.sh"
+
