@@ -1,0 +1,52 @@
+name: Sync Packages
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # Daily at 2 AM UTC
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sync/**'
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync even if no changes'
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name  "GitHub Actions"
+          git config user.email "actions@github.com"
+          git config core.autocrlf false
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh scripts/sync/*.sh
+
+      - name: Sync all packages
+        run: bash scripts/run-sync-all.sh
+
+      - name: Check for changes
+        run: bash scripts/check-changes.sh
+
+      - name: Commit and push
+        env:
+          FORCE: ${{ github.event.inputs.force_sync || 'false' }}
+        run: bash scripts/commit-push.sh "$FORCE"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f .changes-detected
