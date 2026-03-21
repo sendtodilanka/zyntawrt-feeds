@@ -32,8 +32,18 @@ DEST="$REPO_ROOT/$SYNC_DEST_DIR"
 
 echo "📦 Syncing: $SYNC_REPO_URL → $SYNC_DEST_DIR"
 
-# Shallow clone
-git clone --depth 1 --quiet "$SYNC_REPO_URL" "$TEMP_DIR/src"
+# Extract owner/repo from URL (handles both .git and no-.git suffixes)
+REPO_PATH=$(echo "$SYNC_REPO_URL" | sed 's|https://github.com/||;s|\.git$||')
+
+# Download tarball via GitHub archive endpoint (no git, no rate-limit issues)
+TARBALL_URL="https://github.com/${REPO_PATH}/archive/HEAD.tar.gz"
+CURL_ARGS=(-sL --retry 3 --retry-delay 2 --fail)
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+    CURL_ARGS+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+fi
+
+mkdir -p "$TEMP_DIR/src"
+curl "${CURL_ARGS[@]}" "$TARBALL_URL" | tar xz --strip-components=1 -C "$TEMP_DIR/src"
 
 SOURCE="$TEMP_DIR/src/$SYNC_REMOTE_PATH"
 
@@ -56,8 +66,5 @@ if [ "$SYNC_COPY_SUBDIRS" = "true" ]; then
 else
     cp -r "$SOURCE"/. "$DEST/"
 fi
-
-# Remove any nested .git directories
-find "$DEST" -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true
 
 echo "✅ Done: $SYNC_DEST_DIR"

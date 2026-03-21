@@ -32,13 +32,13 @@ jobs:
           git config user.name  "GitHub Actions"
           git config user.email "actions@github.com"
           git config core.autocrlf false
-          # Authenticate all github.com HTTPS clones to avoid rate limiting
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
       - name: Make scripts executable
         run: chmod +x scripts/*.sh scripts/sync/*.sh
 
       - name: Sync all packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/run-sync-all.sh
 
       - name: Check for changes

@@ -20,9 +20,15 @@ fi
 echo "🚀 Running ${#scripts[@]} sync scripts..."
 echo ""
 
+failed=()
 for script in "${scripts[@]}"; do
-    bash "$script"
+    bash "$script" || { echo "⚠️  Failed: $script"; failed+=("$script"); }
 done
 
 echo ""
+if [ ${#failed[@]} -gt 0 ]; then
+    echo "❌ ${#failed[@]} sync(s) failed:"
+    printf '   - %s\n' "${failed[@]}"
+    exit 1
+fi
 echo "✅ All syncs complete"
