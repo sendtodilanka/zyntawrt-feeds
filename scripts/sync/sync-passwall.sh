@@ -6,3 +6,4 @@ export SYNC_DEST_DIR="feeds/passwall"
 export SYNC_CLEAN_DEST="true"
 bash "$SCRIPT_DIR/../sync-repo.sh"
 
+# updated
