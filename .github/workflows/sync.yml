@@ -59,7 +59,9 @@ jobs:
       - name: Create PR with package updates
         if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_sync == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          # PAT required: GITHUB_TOKEN-created PRs do not trigger pull_request
+          # events on validate.yml / auto-merge.yml (GitHub loop-prevention).
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           TIMESTAMP=$(date -u '+%Y%m%d-%H%M')
           DATE=$(date -u '+%Y-%m-%d')
