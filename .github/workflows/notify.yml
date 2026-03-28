@@ -17,9 +17,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "PAT secret not configured — skipping ZyntaWRT dispatch"
+            echo "Add PAT secret to enable automatic firmware builds after feed sync"
+            exit 0
+          fi
           curl -sfL -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/sendtodilanka/ZyntaWRT/dispatches" \
-            -d '{"event_type":"feeds-updated"}'
+            -d '{"event_type":"feeds-updated"}' \
+            || { echo "Dispatch failed — verify PAT has workflow dispatch permissions"; exit 1; }
           echo "ZyntaWRT build triggered"
