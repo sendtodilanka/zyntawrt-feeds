@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -55,22 +56,25 @@ jobs:
             echo "No changes detected"
           fi
 
-      - name: Commit and push
+      - name: Create PR with package updates
         if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_sync == 'true'
-        run: |
-          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S')
-          git add .
-          git commit -m "Sync: ${TIMESTAMP} UTC"
-          git push origin HEAD:main
-
-      - name: Trigger firmware build
-        if: steps.changes.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          curl -sfL -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/sendtodilanka/ZyntaWRT/dispatches" \
-            -d '{"event_type":"feeds-updated"}'
-          echo "ZyntaWRT build triggered"
+          TIMESTAMP=$(date -u '+%Y%m%d-%H%M')
+          DATE=$(date -u '+%Y-%m-%d')
+          SYNC_BRANCH="sync/${TIMESTAMP}"
+
+          git checkout -b "$SYNC_BRANCH"
+          git add .
+          git commit -m "Sync: upstream packages ${DATE}"
+          git push origin "$SYNC_BRANCH"
+
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Sync: upstream packages ${DATE}" \
+            --body "Automated upstream sync. Auto-merges after **Validate Packages** CI passes." \
+            --base main \
+            --head "$SYNC_BRANCH"
+
+          echo "PR created: $SYNC_BRANCH"
