@@ -8,6 +8,7 @@ on:
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
 
@@ -72,7 +73,7 @@ jobs:
           git config user.email "actions@github.com"
           git add .github/upstream-shas.json
           git diff --cached --quiet || git commit -m "Monitor: upstream SHAs updated $(date -u '+%Y-%m-%d %H:%M') UTC"
-          git push origin main
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Trigger sync workflow
         if: steps.check.outputs.changed == 'true'
