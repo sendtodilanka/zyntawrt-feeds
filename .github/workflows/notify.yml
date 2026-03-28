@@ -1,14 +1,15 @@
 name: Notify Firmware Build
 
 on:
-  push:
+  pull_request:
     branches: [main]
-    paths:
-      - 'feeds/**'
+    types: [closed]
 
 jobs:
   dispatch:
     name: Trigger ZyntaWRT build
+    # Only run when a PR is actually merged (not just closed)
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions: {}
 
@@ -19,7 +20,6 @@ jobs:
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "PAT secret not configured — skipping ZyntaWRT dispatch"
-            echo "Add PAT secret to enable automatic firmware builds after feed sync"
             exit 0
           fi
           curl -sfL -X POST \
