@@ -1,25 +1,68 @@
-name: Auto Merge PR
+name: Auto Merge and Notify
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
+  # Runs when Validate Packages finishes — workflow_run fires even when
+  # the triggering workflow was started by GITHUB_TOKEN (no loop-prevention issue).
+  workflow_run:
+    workflows: ["Validate Packages"]
+    types: [completed]
 
 jobs:
-  enable-auto-merge:
-    name: Enable auto-merge
+  merge-and-notify:
+    name: Merge PR and trigger firmware build
+    # Only proceed when validation passed
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
       contents: write
 
     steps:
-      - name: Enable auto-merge
+      - name: Find open PR for validated branch
+        id: pr
         env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.PAT }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          PR=$(gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --head "$HEAD_BRANCH" \
+            --base main \
+            --state open \
+            --json number \
+            -q '.[0].number // empty')
+          if [ -z "$PR" ]; then
+            echo "No open PR found for branch $HEAD_BRANCH targeting main — skipping"
+            exit 0
+          fi
+          echo "pr_number=$PR" >> "$GITHUB_OUTPUT"
+          echo "Found PR #$PR for branch $HEAD_BRANCH"
+
+      - name: Merge PR via PAT
+        if: steps.pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
         run: |
           gh pr merge "$PR_NUMBER" \
             --repo "$GITHUB_REPOSITORY" \
-            --auto \
-            --squash || echo "Auto-merge already enabled or branch protection not configured"
+            --squash \
+            --delete-branch
+          echo "PR #$PR_NUMBER merged and branch deleted"
+
+      - name: Trigger ZyntaWRT firmware build
+        if: steps.pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "PAT not configured — skipping ZyntaWRT dispatch"
+            exit 0
+          fi
+          curl -sfL -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/sendtodilanka/ZyntaWRT/dispatches" \
+            -d '{"event_type":"feeds-updated"}' \
+            || { echo "ZyntaWRT dispatch failed — check PAT has Actions write permission"; exit 1; }
+          echo "ZyntaWRT build triggered"

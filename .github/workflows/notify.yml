@@ -1,31 +1,13 @@
-name: Notify Firmware Build
+# notify.yml is replaced by auto-merge.yml which now handles both
+# PR merging (via PAT) and ZyntaWRT dispatch in one workflow_run job.
+# This file is kept as a no-op to avoid breaking existing references.
+name: Notify Firmware Build (deprecated)
 
 on:
-  pull_request:
-    branches: [main]
-    types: [closed]
+  workflow_dispatch:  # manual only, never fires automatically
 
 jobs:
-  dispatch:
-    name: Trigger ZyntaWRT build
-    # Only run when a PR is actually merged (not just closed)
-    if: github.event.pull_request.merged == true
+  noop:
     runs-on: ubuntu-latest
-    permissions: {}
-
     steps:
-      - name: Dispatch to ZyntaWRT
-        env:
-          GH_TOKEN: ${{ secrets.PAT }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "PAT secret not configured — skipping ZyntaWRT dispatch"
-            exit 0
-          fi
-          curl -sfL -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/sendtodilanka/ZyntaWRT/dispatches" \
-            -d '{"event_type":"feeds-updated"}' \
-            || { echo "Dispatch failed — verify PAT has workflow dispatch permissions"; exit 1; }
-          echo "ZyntaWRT build triggered"
+      - run: echo "This workflow is superseded by auto-merge.yml"
