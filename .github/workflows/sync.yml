@@ -67,7 +67,11 @@ jobs:
 
           git checkout -b "$SYNC_BRANCH"
           git add .
-          git commit -m "Sync: upstream packages ${DATE}"
+          # Commit changes; if nothing to commit (force_sync with no new packages),
+          # create an empty commit so the PR branch always differs from main.
+          git diff --cached --quiet && git diff --quiet \
+            && git commit --allow-empty -m "Sync: forced check ${DATE} (no package changes)" \
+            || git commit -m "Sync: upstream packages ${DATE}"
           git push origin "$SYNC_BRANCH"
 
           gh pr create \
