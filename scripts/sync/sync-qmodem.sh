@@ -1,12 +1,18 @@
 #!/bin/bash
-# sync-qmodem.sh — Syncs FUjr/modem_feeds (application/ + luci/) in one download
+# sync-qmodem.sh — Syncs FUjr/modem_feeds (application/ + luci/ + driver/) in one download
+#
+# Missing packages without driver/:
+#   kmod-qmi_wwan_q  (quectel_QMI_WWAN)
+#   kmod-qmi_wwan_f  (fibocom_QMI_WWAN)
+#   kmod-qmi_wwan_s  (simcom_QMI_WWAN)
+#   kmod-pcie_mhi    (quectel_MHI)
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."; pwd)"
 REPO_PATH="FUjr/modem_feeds"
 DEST="$REPO_ROOT/feeds/qmodem"
 
-echo "Syncing: https://github.com/${REPO_PATH}.git -> feeds/qmodem (application + luci)"
+echo "Syncing: https://github.com/${REPO_PATH}.git -> feeds/qmodem (application + luci + driver)"
 
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf '$TEMP_DIR'" EXIT
@@ -22,10 +28,14 @@ CURL_ARGS=(
 mkdir -p "$TEMP_DIR/src"
 curl "${CURL_ARGS[@]}" "$TARBALL_URL" | tar xz --strip-components=1 -C "$TEMP_DIR/src"
 
-# Clean dest then sync both application/ and luci/ subdirs in one pass
+# Clean dest then sync application/, luci/, and driver/ subdirs in one pass
 rm -rf "${DEST:?}"/*
 mkdir -p "$DEST"
-for dir in "$TEMP_DIR/src/application"/*/ "$TEMP_DIR/src/luci"/*/; do
+
+for dir in \
+    "$TEMP_DIR/src/application"/*/ \
+    "$TEMP_DIR/src/luci"/*/ \
+    "$TEMP_DIR/src/driver"/*/; do
     [ -d "$dir" ] && cp -r "$dir" "$DEST/"
 done
 
