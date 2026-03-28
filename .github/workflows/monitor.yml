@@ -13,8 +13,12 @@ jobs:
       contents: write
 
     steps:
+      # Use PAT if available so that the SHA commit push triggers sync.yml.
+      # GITHUB_TOKEN pushes do NOT trigger downstream workflows (GitHub security).
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.PAT || github.token }}
 
       - name: Check upstream HEADs
         id: check
@@ -64,7 +68,9 @@ jobs:
           echo "$NEW_SHAS" | jq . > "$SHA_FILE"
           echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
 
-      - name: Commit updated SHAs
+      # Push SHA file using PAT so downstream sync.yml is triggered.
+      # Falls back to github.token (no sync trigger) if PAT is not configured.
+      - name: Commit and push updated SHAs
         if: steps.check.outputs.changed == 'true'
         run: |
           git config user.name  "GitHub Actions"
@@ -72,15 +78,4 @@ jobs:
           git add .github/upstream-shas.json
           git diff --cached --quiet || git commit -m "Monitor: upstream SHAs updated $(date -u '+%Y-%m-%d %H:%M') UTC"
           git push origin HEAD:${{ github.ref_name }}
-
-      - name: Trigger sync workflow
-        if: steps.check.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          curl -sL -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/sendtodilanka/zyntawrt-feeds/actions/workflows/sync.yml/dispatches" \
-            -d '{"ref":"main"}'
-          echo "Sync triggered"
+          echo "SHA file pushed — sync.yml will trigger if PAT was used for checkout"
