@@ -42,14 +42,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         run: bash scripts/run-sync-all.sh
 
-      - name: Check for changes
-        run: bash scripts/check-changes.sh
+      - name: Detect changes
+        id: changes
+        run: |
+          changed=$(git status --porcelain | wc -l | tr -d ' ')
+          if [ "$changed" -gt 0 ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "$changed file(s) changed:"
+            git status --short | head -30
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes detected"
+          fi
 
       - name: Commit and push
-        env:
-          FORCE: ${{ github.event.inputs.force_sync || 'false' }}
-        run: bash scripts/commit-push.sh "$FORCE"
+        if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_sync == 'true'
+        run: |
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S')
+          git add .
+          git commit -m "Sync: ${TIMESTAMP} UTC"
+          git push origin HEAD:main
 
-      - name: Cleanup
-        if: always()
-        run: rm -f .changes-detected
+      - name: Trigger firmware build
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          curl -sfL -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/sendtodilanka/ZyntaWRT/dispatches" \
+            -d '{"event_type":"feeds-updated"}'
+          echo "ZyntaWRT build triggered"
