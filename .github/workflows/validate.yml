@@ -24,12 +24,15 @@ jobs:
 
           while IFS= read -r -d '' makefile; do
             CHECKED=$((CHECKED + 1))
-            if ! grep -q "PKG_NAME" "$makefile"; then
-              echo "FAIL: Missing PKG_NAME in $makefile"
+
+            # LuCI packages use LUCI_TITLE + luci.mk (PKG_NAME derived from dir name)
+            # Standard packages use PKG_NAME directly
+            if ! grep -q "PKG_NAME\|LUCI_TITLE" "$makefile"; then
+              echo "FAIL: Missing PKG_NAME or LUCI_TITLE in $makefile"
               ERRORS=$((ERRORS + 1))
             fi
-            if ! grep -q "PKG_VERSION\|PKG_RELEASE" "$makefile"; then
-              echo "FAIL: Missing PKG_VERSION/PKG_RELEASE in $makefile"
+            if ! grep -q "PKG_VERSION\|PKG_RELEASE\|LUCI_TITLE" "$makefile"; then
+              echo "FAIL: Missing version info in $makefile"
               ERRORS=$((ERRORS + 1))
             fi
           done < <(find feeds -mindepth 3 -maxdepth 3 -name "Makefile" -print0 2>/dev/null)
