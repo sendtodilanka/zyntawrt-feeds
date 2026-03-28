@@ -20,11 +20,13 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
+          token: ${{ secrets.PAT }}
           fetch-depth: 0
 
       - name: Configure Git
@@ -38,17 +40,41 @@ jobs:
 
       - name: Sync all packages
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: bash scripts/run-sync-all.sh
 
-      - name: Check for changes
-        run: bash scripts/check-changes.sh
+      - name: Detect changes
+        id: changes
+        run: |
+          changed=$(git status --porcelain | wc -l | tr -d ' ')
+          if [ "$changed" -gt 0 ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "$changed file(s) changed:"
+            git status --short | head -30
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes detected"
+          fi
 
-      - name: Commit and push
+      - name: Create PR with package updates
+        if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_sync == 'true'
         env:
-          FORCE: ${{ github.event.inputs.force_sync || 'false' }}
-        run: bash scripts/commit-push.sh "$FORCE"
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          TIMESTAMP=$(date -u '+%Y%m%d-%H%M')
+          DATE=$(date -u '+%Y-%m-%d')
+          SYNC_BRANCH="sync/${TIMESTAMP}"
 
-      - name: Cleanup
-        if: always()
-        run: rm -f .changes-detected
+          git checkout -b "$SYNC_BRANCH"
+          git add .
+          git commit -m "Sync: upstream packages ${DATE}"
+          git push origin "$SYNC_BRANCH"
+
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Sync: upstream packages ${DATE}" \
+            --body "Automated upstream sync. Auto-merges after **Validate Packages** CI passes." \
+            --base main \
+            --head "$SYNC_BRANCH"
+
+          echo "PR created: $SYNC_BRANCH"
