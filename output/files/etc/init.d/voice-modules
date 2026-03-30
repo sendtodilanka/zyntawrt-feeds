@@ -1,0 +1,64 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-or-later
+# voice-modules — procd init script for AW1000 voice kernel modules
+#
+# Loads the PCM TDM and SLIC kernel modules in the correct order,
+# sets IRQ affinity for DMA performance, and verifies device readiness.
+
+START=19
+STOP=90
+USE_PROCD=1
+
+MBOX_IRQ_NAME="ipq-mbox"
+
+boot() {
+	start
+}
+
+start_service() {
+	# Step 1: Load PCM TDM driver
+	if ! lsmod | grep -q ipq_pcm_tdm; then
+		modprobe ipq-pcm-tdm 2>/dev/null || {
+			logger -t voice-modules "FATAL: failed to load ipq-pcm-tdm"
+			return 1
+		}
+	fi
+
+	# Step 2: Set IRQ affinity for ipq-mbox to CPU 3 (bitmask 0x8)
+	# This dedicates the audio DMA interrupt to a single core,
+	# reducing jitter in the voice path.
+	mbox_irq=$(awk -F: "/$MBOX_IRQ_NAME/{gsub(/ /,\"\",\$1); print \$1}" \
+		   /proc/interrupts 2>/dev/null | head -1)
+	if [ -n "$mbox_irq" ] && [ -f "/proc/irq/$mbox_irq/smp_affinity" ]; then
+		echo 8 > "/proc/irq/$mbox_irq/smp_affinity"
+		logger -t voice-modules "IRQ $mbox_irq ($MBOX_IRQ_NAME) pinned to CPU 3"
+	fi
+
+	# Step 3: Load SLIC driver
+	if ! lsmod | grep -q slic_si3226x; then
+		modprobe slic-si3226x 2>/dev/null || {
+			logger -t voice-modules "FATAL: failed to load slic-si3226x"
+			return 1
+		}
+	fi
+
+	# Step 4: Wait for /dev/proslic0 (up to 5 seconds)
+	tries=0
+	while [ $tries -lt 20 ] && [ ! -e /dev/proslic0 ]; do
+		sleep 0.25
+		tries=$((tries + 1))
+	done
+
+	if [ ! -e /dev/proslic0 ]; then
+		logger -t voice-modules "WARNING: /dev/proslic0 not found after 5s"
+		return 1
+	fi
+
+	logger -t voice-modules "Voice modules loaded, /dev/proslic0 ready"
+}
+
+stop_service() {
+	rmmod slic-si3226x 2>/dev/null
+	rmmod ipq-pcm-tdm 2>/dev/null
+	logger -t voice-modules "Voice modules unloaded"
+}

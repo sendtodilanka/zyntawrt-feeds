@@ -1,0 +1,65 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# 98-volte-config — First-boot VoLTE/IMS configuration for Quectel modem
+#
+# Sends AT commands to enable IMS/VoLTE on the Quectel module.
+# This script runs once on first boot (uci-defaults) and is deleted after.
+
+AT_PORT="/dev/ttyUSB2"
+BAUD=115200
+
+# Wait for modem AT port
+max_wait=60
+waited=0
+while [ ! -e "$AT_PORT" ] && [ $waited -lt $max_wait ]; do
+	sleep 1
+	waited=$((waited + 1))
+done
+
+if [ ! -e "$AT_PORT" ]; then
+	logger -t volte-config "ERROR: $AT_PORT not found after ${max_wait}s"
+	exit 1
+fi
+
+# Configure serial port
+stty -F "$AT_PORT" "$BAUD" cs8 -cstopb -parenb raw -echo 2>/dev/null
+
+send_at() {
+	local cmd="$1"
+	local delay="${2:-1}"
+
+	printf "%s\r" "$cmd" > "$AT_PORT"
+	sleep "$delay"
+}
+
+logger -t volte-config "Configuring VoLTE/IMS on $AT_PORT"
+
+# Basic modem setup
+send_at "ATE0"
+send_at "AT+CMEE=2"
+
+# Enable IMS (VoLTE)
+send_at "AT+QCFG=\"ims\",1" 2
+
+# VoLTE-specific settings
+send_at "AT+QCFG=\"ims/callwaiting\",1"
+send_at "AT+QCFG=\"ims/sms\",1"
+
+# Enable extended ring format for call type identification
+send_at "AT+CRC=1"
+
+# Enable caller ID presentation
+send_at "AT+CLIP=1"
+
+# ATH disconnects voice calls (not just data)
+send_at "AT+CVHU=0"
+
+# Enable URC for call state changes
+send_at "AT+QINDCFG=\"all\",1"
+
+# Verify IMS registration
+send_at "AT+QCFG=\"ims\"" 2
+
+logger -t volte-config "VoLTE/IMS configuration complete"
+
+exit 0
