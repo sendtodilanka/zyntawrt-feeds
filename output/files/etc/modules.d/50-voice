@@ -1,0 +1,5 @@
+# Voice subsystem kernel modules — load order matters
+# 1. PCM TDM driver (provides audio DMA transport)
+# 2. SLIC driver (SPI to Si3226x, depends on PCM being ready)
+ipq-pcm-tdm
+slic-si3226x
