@@ -4,9 +4,9 @@
   "jerrykuku/luci-app-argon-config": "2ddae597f994f8a49358f8dfd03b7e6a732aae63",
   "immortalwrt/homeproxy": "ec92da1f6d395ed9d9866cf469a827e977f652f8",
   "rufengsuixing/luci-app-adguardhome": "37fdf502b99328b37c9ef4c4387f069f67253f85",
-  "vernesong/OpenClash": "a4c2052d392695a7a11685957a751e940a1886e1",
-  "Openwrt-Passwall/openwrt-passwall": "bb2b22f1850803ac6142cf738efea5057212f7e7",
+  "vernesong/OpenClash": "d2a69e928d4a5bc25c934ab5524e6a2a4c84e6a8",
+  "Openwrt-Passwall/openwrt-passwall": "a25b5878d7730be48c3258c4a19ee4e72bbe4852",
   "Openwrt-Passwall/openwrt-passwall-packages": "0f2751a818cb4d7981910d3e821c12e1944f1020",
-  "Openwrt-Passwall/openwrt-passwall2": "a44f900b5425f16a05c5737bfc5ac492d2c0e79d",
+  "Openwrt-Passwall/openwrt-passwall2": "c27a06b0d5a3f59c99fb44abd247a740189bdd0a",
   "FUjr/modem_feeds": "6020bfe1f55e3c5cb8098822a30c69f2d5946fcd"
 }
