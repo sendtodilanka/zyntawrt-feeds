@@ -1,11 +1,11 @@
 {
   "4IceG/luci-app-3ginfo-lite": "85a24e2a054e4a011af1f51b7fd37e7dcb700fe0",
-  "jerrykuku/luci-theme-argon": "9c6fa0c135350cb4c4ed6810508e8a5f3361097c",
+  "jerrykuku/luci-theme-argon": "b1035d2d4b92697452da2b8c248878c0c4fbe88a",
   "jerrykuku/luci-app-argon-config": "2ddae597f994f8a49358f8dfd03b7e6a732aae63",
   "immortalwrt/homeproxy": "ec92da1f6d395ed9d9866cf469a827e977f652f8",
   "rufengsuixing/luci-app-adguardhome": "37fdf502b99328b37c9ef4c4387f069f67253f85",
   "vernesong/OpenClash": "184daebfd78b6eb73868f795a5812dd187ad9a30",
-  "Openwrt-Passwall/openwrt-passwall": "9c5a4622271b8e1fb9bc00088dc61c928cfbb0aa",
+  "Openwrt-Passwall/openwrt-passwall": "d05360365c05cc65f057b377f52412815a56efa7",
   "Openwrt-Passwall/openwrt-passwall-packages": "e664d20e4804c8f05f4efc0f58d04465b30265d1",
   "Openwrt-Passwall/openwrt-passwall2": "acbeab094c8c6649a5d1a1173f4b636f7c241ae9",
   "FUjr/modem_feeds": "ffe7daf908ea371abf69fd59ecba0e97e315f60e"
