@@ -1,7 +1,7 @@
 {
   "4IceG/luci-app-3ginfo-lite": "85a24e2a054e4a011af1f51b7fd37e7dcb700fe0",
-  "jerrykuku/luci-theme-argon": "b1035d2d4b92697452da2b8c248878c0c4fbe88a",
-  "jerrykuku/luci-app-argon-config": "2ddae597f994f8a49358f8dfd03b7e6a732aae63",
+  "jerrykuku/luci-theme-argon": "e2d32ab3c4a7b564e1b2652f6a9daa090c902578",
+  "jerrykuku/luci-app-argon-config": "3e099a37c3f71d0de677f1b6b0f4bffd57d91dac",
   "immortalwrt/homeproxy": "ec92da1f6d395ed9d9866cf469a827e977f652f8",
   "rufengsuixing/luci-app-adguardhome": "37fdf502b99328b37c9ef4c4387f069f67253f85",
   "vernesong/OpenClash": "184daebfd78b6eb73868f795a5812dd187ad9a30",
