@@ -5,8 +5,8 @@
   "immortalwrt/homeproxy": "ec92da1f6d395ed9d9866cf469a827e977f652f8",
   "rufengsuixing/luci-app-adguardhome": "37fdf502b99328b37c9ef4c4387f069f67253f85",
   "vernesong/OpenClash": "184daebfd78b6eb73868f795a5812dd187ad9a30",
-  "Openwrt-Passwall/openwrt-passwall": "0ba8426c8bc059ac331dbc5bf19eee43e07a277b",
+  "Openwrt-Passwall/openwrt-passwall": "8a36dddc7807b6fbc1fb23a04db2524ea9a70c6b",
   "Openwrt-Passwall/openwrt-passwall-packages": "063ef455aa81631a9f93429614f849d143093cdc",
   "Openwrt-Passwall/openwrt-passwall2": "77ceff0d2aefa3d266888cbd33e7afd9ea5e3610",
-  "FUjr/modem_feeds": "ffe7daf908ea371abf69fd59ecba0e97e315f60e"
+  "FUjr/modem_feeds": "8b4edc053daf4aa392d8f50fabeb43ddf5c1dda5"
 }
